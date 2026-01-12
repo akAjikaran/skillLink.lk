@@ -1,0 +1,218 @@
+export const categories = [
+  { id: "plumber", name: "Plumber", icon: "wrench" },
+  { id: "electrician", name: "Electrician", icon: "zap" },
+  { id: "it-support", name: "IT Support", icon: "laptop" },
+  { id: "designer", name: "Designer", icon: "palette" },
+  { id: "creative", name: "Creative Services", icon: "sparkles" },
+  { id: "teacher", name: "Teachers & Tutors", icon: "book-open" },
+  { id: "lawyer", name: "Lawyers", icon: "scale" },
+  { id: "doctor", name: "Doctors", icon: "stethoscope" },
+  { id: "fashion", name: "Fashion Makers", icon: "shirt" },
+  { id: "other", name: "Other Services", icon: "briefcase" },
+];
+
+export const sriLankanDistricts = [
+  "Colombo",
+  "Gampaha",
+  "Kalutara",
+  "Kandy",
+  "Matale",
+  "Nuwara Eliya",
+  "Galle",
+  "Matara",
+  "Hambantota",
+  "Jaffna",
+  "Kilinochchi",
+  "Mannar",
+  "Vavuniya",
+  "Mullaitivu",
+  "Batticaloa",
+  "Ampara",
+  "Trincomalee",
+  "Kurunegala",
+  "Puttalam",
+  "Anuradhapura",
+  "Polonnaruwa",
+  "Badulla",
+  "Monaragala",
+  "Ratnapura",
+  "Kegalle",
+];
+
+export interface ServiceProvider {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  skills: string[];
+  location: string;
+  phone: string;
+  email: string;
+  whatsapp?: string;
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+  image?: string;
+  rating?: number;
+  featured?: boolean;
+  createdAt: string;
+}
+
+export const mockServiceProviders: ServiceProvider[] = [
+  {
+    id: "1",
+    name: "Sunil Perera",
+    category: "plumber",
+    description: "Professional plumbing services with 15+ years of experience. Specializing in residential and commercial plumbing repairs, installations, and maintenance.",
+    skills: ["Pipe Repair", "Bathroom Installation", "Water Heater Service", "Drain Cleaning"],
+    location: "Colombo",
+    phone: "+94 77 123 4567",
+    email: "sunil.perera@email.com",
+    whatsapp: "+94771234567",
+    rating: 4.8,
+    featured: true,
+    createdAt: "2026-01-05",
+  },
+  {
+    id: "2",
+    name: "Nimal Silva",
+    category: "electrician",
+    description: "Licensed electrician providing safe and reliable electrical services. Available for emergency repairs and new installations.",
+    skills: ["Wiring", "Circuit Breakers", "Lighting Installation", "Solar Panel Setup"],
+    location: "Gampaha",
+    phone: "+94 77 234 5678",
+    email: "nimal.silva@email.com",
+    whatsapp: "+94772345678",
+    rating: 4.9,
+    featured: true,
+    createdAt: "2026-01-04",
+  },
+  {
+    id: "3",
+    name: "Anura Tech Solutions",
+    category: "it-support",
+    description: "Complete IT support for home and business. Network setup, troubleshooting, software installation, and cybersecurity services.",
+    skills: ["Network Setup", "Troubleshooting", "Software Installation", "Data Recovery"],
+    location: "Kandy",
+    phone: "+94 77 345 6789",
+    email: "anura.tech@email.com",
+    rating: 4.7,
+    featured: true,
+    createdAt: "2026-01-03",
+  },
+  {
+    id: "4",
+    name: "Ravi Design Studio",
+    category: "designer",
+    description: "Creative design solutions for all your branding needs. Logo design, web design, and marketing materials.",
+    skills: ["Logo Design", "Web Design", "Branding", "Print Design"],
+    location: "Colombo",
+    phone: "+94 77 456 7890",
+    email: "ravi.designs@email.com",
+    socialLinks: {
+      instagram: "https://instagram.com/ravidesigns",
+      facebook: "https://facebook.com/ravidesigns",
+    },
+    rating: 4.9,
+    featured: true,
+    createdAt: "2026-01-02",
+  },
+  {
+    id: "5",
+    name: "Kamala Photography",
+    category: "creative",
+    description: "Professional photography for weddings, events, and portraits. Capturing your special moments beautifully.",
+    skills: ["Wedding Photography", "Event Coverage", "Portrait Sessions", "Product Photography"],
+    location: "Galle",
+    phone: "+94 77 567 8901",
+    email: "kamala.photo@email.com",
+    rating: 4.8,
+    createdAt: "2026-01-01",
+  },
+  {
+    id: "6",
+    name: "Priya's Home Tuition",
+    category: "teacher",
+    description: "Experienced teacher offering home tuition for O/L and A/L students. Mathematics, Science, and English subjects.",
+    skills: ["Mathematics", "Science", "English", "O/L & A/L Preparation"],
+    location: "Colombo",
+    phone: "+94 77 678 9012",
+    email: "priya.tuition@email.com",
+    rating: 4.9,
+    createdAt: "2025-12-30",
+  },
+  {
+    id: "7",
+    name: "Lakshman Associates",
+    category: "lawyer",
+    description: "Legal consultation and representation for civil, criminal, and corporate matters. 20 years of legal experience.",
+    skills: ["Civil Law", "Criminal Law", "Corporate Law", "Property Law"],
+    location: "Colombo",
+    phone: "+94 77 789 0123",
+    email: "lakshman.law@email.com",
+    rating: 4.7,
+    createdAt: "2025-12-28",
+  },
+  {
+    id: "8",
+    name: "Dr. Jayanthi Medical Center",
+    category: "doctor",
+    description: "General practitioner with special interest in family medicine and preventive care. Evening and weekend appointments available.",
+    skills: ["General Medicine", "Health Checkups", "Vaccination", "Preventive Care"],
+    location: "Kandy",
+    phone: "+94 77 890 1234",
+    email: "dr.jayanthi@email.com",
+    rating: 4.9,
+    createdAt: "2025-12-25",
+  },
+  {
+    id: "9",
+    name: "Shalini Fashion House",
+    category: "fashion",
+    description: "Custom tailoring and fashion design for traditional and modern wear. Wedding dresses, sarees, and custom outfits.",
+    skills: ["Custom Tailoring", "Wedding Dresses", "Traditional Wear", "Alterations"],
+    location: "Gampaha",
+    phone: "+94 77 901 2345",
+    email: "shalini.fashion@email.com",
+    rating: 4.8,
+    createdAt: "2025-12-20",
+  },
+  {
+    id: "10",
+    name: "Rohan AC Service",
+    category: "other",
+    description: "Air conditioning installation, repair, and maintenance. Quick response time and affordable rates.",
+    skills: ["AC Installation", "AC Repair", "Maintenance", "Refrigerant Refilling"],
+    location: "Colombo",
+    phone: "+94 77 012 3456",
+    email: "rohan.ac@email.com",
+    rating: 4.6,
+    createdAt: "2025-12-15",
+  },
+  {
+    id: "11",
+    name: "Dilshan Electricals",
+    category: "electrician",
+    description: "Residential and commercial electrical services. Fast, efficient, and affordable solutions for all your electrical needs.",
+    skills: ["House Wiring", "Electrical Repairs", "Fan Installation", "Emergency Services"],
+    location: "Kalutara",
+    phone: "+94 76 123 4567",
+    email: "dilshan.electric@email.com",
+    rating: 4.5,
+    createdAt: "2025-12-10",
+  },
+  {
+    id: "12",
+    name: "Chaminda Plumbing Pro",
+    category: "plumber",
+    description: "24/7 emergency plumbing services. No job too big or small. Customer satisfaction guaranteed.",
+    skills: ["Emergency Repairs", "Leak Detection", "Pipe Installation", "Bathroom Fitting"],
+    location: "Matara",
+    phone: "+94 76 234 5678",
+    email: "chaminda.plumb@email.com",
+    rating: 4.7,
+    createdAt: "2025-12-05",
+  },
+];
