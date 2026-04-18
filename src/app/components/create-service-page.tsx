@@ -22,6 +22,7 @@ interface Category {
   id: string;
   name: string;
   icon: string;
+  slug: string;
 }
 
 interface CreateServicePageProps {
@@ -57,13 +58,21 @@ export function CreateServicePage({ onNavigate, editId }: CreateServicePageProps
     async function fetchCategories() {
       const { data, error } = await supabase
         .from('categories')
-        .select('*')
-        .order('name');
+        .select('*');
       
       if (error) {
         console.error('Error fetching categories:', error);
-      } else {
-        setCategories(data || []);
+      } else if (data) {
+        const priorityOrder = ["plumber", "electrician", "cctv", "ac-repair"];
+        const sortedCategories = [...data].sort((a, b) => {
+          const indexA = priorityOrder.indexOf(a.slug);
+          const indexB = priorityOrder.indexOf(b.slug);
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          return 0;
+        });
+        setCategories(sortedCategories);
       }
     }
     fetchCategories();
@@ -154,7 +163,6 @@ export function CreateServicePage({ onNavigate, editId }: CreateServicePageProps
       console.log("Current user ID:", user.id);
 
       // 1. Ensure a profile exists for this user in the 'profiles' table
-      // Many database schemas reference profiles(id) instead of auth.users(id) directly
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
@@ -176,8 +184,6 @@ export function CreateServicePage({ onNavigate, editId }: CreateServicePageProps
         
         if (createProfileError) {
           console.error("Failed to create profile record:", createProfileError);
-          // If this fails, it might be because the user is not in auth.users (unlikely) 
-          // or the profiles table doesn't exist yet.
           if (createProfileError.code === '23503') {
              throw new Error("Database Error: Your user account is not recognized by the profiles table. Please ensure you have run the latest SQL schema in Supabase.");
           }

@@ -1,9 +1,10 @@
-import { Briefcase, LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, User as UserIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Logo } from "./logo";
 
 interface NavbarProps {
   onNavigate: (page: string, params?: any) => void;
@@ -39,10 +40,7 @@ export function Navbar({ onNavigate, currentPage, session }: NavbarProps) {
           onClick={() => onNavigate("home")}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
-          <div className="bg-primary text-primary-foreground p-2 rounded-xl shadow-sm">
-            <Briefcase className="h-6 w-6" />
-          </div>
-          <span className="font-bold text-xl tracking-tight hidden sm:block">ServiceHub</span>
+          <Logo className="text-primary" width={110} height={30} />
         </button>
 
         <div className="flex items-center gap-3">
@@ -52,7 +50,7 @@ export function Navbar({ onNavigate, currentPage, session }: NavbarProps) {
               onClick={() => onNavigate("browse")}
               className="font-semibold"
             >
-              Browse
+              Find Services
             </Button>
             
             {session && (

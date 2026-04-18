@@ -95,12 +95,6 @@ CREATE TRIGGER on_auth_user_created
 INSERT INTO categories (name, slug, icon) VALUES
 ('Plumber', 'plumber', 'wrench'),
 ('Electrician', 'electrician', 'zap'),
-('IT Support', 'it-support', 'laptop'),
-('Designer', 'designer', 'palette'),
-('Creative Services', 'creative', 'sparkles'),
-('Teachers & Tutors', 'teacher', 'book-open'),
-('Lawyers', 'lawyer', 'scale'),
-('Doctors', 'doctor', 'stethoscope'),
-('Fashion Makers', 'fashion', 'shirt'),
-('Other Services', 'other', 'briefcase')
+('AC Repair', 'ac-repair', 'wind'),
+('CCTV Expert', 'cctv', 'shield-check')
 ON CONFLICT (slug) DO NOTHING;
