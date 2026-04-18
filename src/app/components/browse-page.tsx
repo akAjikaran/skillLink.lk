@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
-import { Search, MapPin, Filter, Star, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, MapPin, Filter, Star, X, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { categories, mockServiceProviders, sriLankanDistricts } from "../data/mock-data";
+import { sriLankanDistricts } from "../data/mock-data";
 import { CategoryIcon } from "./category-icon";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -14,6 +14,25 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
+import { supabase } from "../lib/supabase";
+
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+interface ServiceProvider {
+  id: string;
+  name: string;
+  category_id: string;
+  description: string;
+  skills: string[];
+  location: string;
+  rating: number;
+  created_at: string;
+  categories?: Category | Category[]; // Joined data
+}
 
 interface BrowsePageProps {
   onNavigate: (page: string, params?: any) => void;
@@ -29,40 +48,82 @@ export function BrowsePage({ onNavigate, initialParams }: BrowsePageProps) {
   const [selectedLocation, setSelectedLocation] = useState(initialParams?.location || "");
   const [selectedCategory, setSelectedCategory] = useState(initialParams?.category || "");
   const [sortBy, setSortBy] = useState("relevance");
+  
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [providers, setProviders] = useState<ServiceProvider[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Filter and sort providers
-  const filteredProviders = useMemo(() => {
-    let filtered = [...mockServiceProviders];
+  // Fetch Categories
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name');
+        
+        if (error) {
+          console.error('Error fetching categories:', error);
+        } else {
+          setCategories(data || []);
+        }
+      } catch (error) {
+        console.error('Unexpected error fetching categories:', error);
+      }
+    }
+    fetchCategories();
+  }, []);
 
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query) ||
-          p.skills.some((s) => s.toLowerCase().includes(query))
-      );
+  // Fetch Service Providers with filters
+  useEffect(() => {
+    async function fetchProviders() {
+      setIsLoading(true);
+      try {
+        let query = supabase
+          .from('service_providers')
+          .select('*, categories(*)');
+
+        // Location filter
+        if (selectedLocation && selectedLocation !== "all" && selectedLocation !== "") {
+          query = query.eq('location', selectedLocation);
+        }
+
+        // Category filter
+        if (selectedCategory && selectedCategory !== "all" && selectedCategory !== "") {
+          query = query.eq('category_id', selectedCategory);
+        }
+
+        // Search filter (name, description, or skills)
+        if (searchQuery) {
+          // Use safe search query to avoid Supabase errors
+          const safeSearch = searchQuery.replace(/[^\w\s]/gi, '');
+          query = query.or(`name.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%`);
+        }
+
+        // Sort
+        if (sortBy === "rating") {
+          query = query.order('rating', { ascending: false });
+        } else if (sortBy === "newest") {
+          query = query.order('created_at', { ascending: false });
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        setProviders(data || []);
+      } catch (error) {
+        console.error('Error fetching providers:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
 
-    // Location filter
-    if (selectedLocation) {
-      filtered = filtered.filter((p) => p.location === selectedLocation);
-    }
+    // Debounce search
+    const timer = setTimeout(() => {
+      fetchProviders();
+    }, 300);
 
-    // Category filter
-    if (selectedCategory) {
-      filtered = filtered.filter((p) => p.category === selectedCategory);
-    }
-
-    // Sort
-    if (sortBy === "rating") {
-      filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    } else if (sortBy === "newest") {
-      filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }
-
-    return filtered;
+    return () => clearTimeout(timer);
   }, [searchQuery, selectedLocation, selectedCategory, sortBy]);
 
   const clearFilters = () => {
@@ -73,7 +134,9 @@ export function BrowsePage({ onNavigate, initialParams }: BrowsePageProps) {
   };
 
   const activeFiltersCount =
-    (searchQuery ? 1 : 0) + (selectedLocation ? 1 : 0) + (selectedCategory ? 1 : 0);
+    (searchQuery ? 1 : 0) + 
+    (selectedLocation && selectedLocation !== "all" && selectedLocation !== "" ? 1 : 0) + 
+    (selectedCategory && selectedCategory !== "all" && selectedCategory !== "" ? 1 : 0);
 
   return (
     <div className="min-h-screen pb-12">
@@ -91,7 +154,7 @@ export function BrowsePage({ onNavigate, initialParams }: BrowsePageProps) {
               />
             </div>
             <div className="flex gap-3">
-              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+              <Select value={selectedLocation || "all"} onValueChange={(val) => setSelectedLocation(val === "all" ? "" : val)}>
                 <SelectTrigger className="w-[180px]">
                   <MapPin className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Location" />
@@ -106,7 +169,7 @@ export function BrowsePage({ onNavigate, initialParams }: BrowsePageProps) {
                 </SelectContent>
               </Select>
 
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select value={selectedCategory || "all"} onValueChange={(val) => setSelectedCategory(val === "all" ? "" : val)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
@@ -139,7 +202,7 @@ export function BrowsePage({ onNavigate, initialParams }: BrowsePageProps) {
                   <div className="mt-6 space-y-4">
                     <div>
                       <label className="text-sm font-medium mb-2 block">Location</label>
-                      <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                      <Select value={selectedLocation || "all"} onValueChange={(val) => setSelectedLocation(val === "all" ? "" : val)}>
                         <SelectTrigger>
                           <SelectValue placeholder="All Locations" />
                         </SelectTrigger>
@@ -155,7 +218,7 @@ export function BrowsePage({ onNavigate, initialParams }: BrowsePageProps) {
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-2 block">Category</label>
-                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <Select value={selectedCategory || "all"} onValueChange={(val) => setSelectedCategory(val === "all" ? "" : val)}>
                         <SelectTrigger>
                           <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
@@ -197,9 +260,9 @@ export function BrowsePage({ onNavigate, initialParams }: BrowsePageProps) {
         {/* Results Header */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl mb-1">Service Providers</h1>
-            <p className="text-muted-foreground">
-              {filteredProviders.length} {filteredProviders.length === 1 ? "result" : "results"} found
+            <h1 className="text-2xl mb-1 font-bold">Service Providers</h1>
+            <p className="text-muted-foreground font-medium">
+              {isLoading ? "Searching..." : `${providers.length} ${providers.length === 1 ? "result" : "results"} found`}
             </p>
           </div>
 
@@ -209,14 +272,14 @@ export function BrowsePage({ onNavigate, initialParams }: BrowsePageProps) {
                 variant="ghost"
                 size="sm"
                 onClick={clearFilters}
-                className="gap-2"
+                className="gap-2 font-bold"
               >
                 <X className="h-4 w-4" />
                 Clear Filters
               </Button>
             )}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[160px] hidden md:flex">
+              <SelectTrigger className="w-[160px] hidden md:flex font-medium">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -228,103 +291,75 @@ export function BrowsePage({ onNavigate, initialParams }: BrowsePageProps) {
           </div>
         </div>
 
-        {/* Active Filters */}
-        {activeFiltersCount > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {searchQuery && (
-              <Badge variant="secondary" className="gap-2">
-                Search: {searchQuery}
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="hover:text-foreground"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            )}
-            {selectedLocation && (
-              <Badge variant="secondary" className="gap-2">
-                <MapPin className="h-3 w-3" />
-                {selectedLocation}
-                <button
-                  onClick={() => setSelectedLocation("")}
-                  className="hover:text-foreground"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            )}
-            {selectedCategory && (
-              <Badge variant="secondary" className="gap-2">
-                {categories.find((c) => c.id === selectedCategory)?.name}
-                <button
-                  onClick={() => setSelectedCategory("")}
-                  className="hover:text-foreground"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            )}
-          </div>
-        )}
-
         {/* Results Grid */}
-        {filteredProviders.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="bg-muted/50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+            <Loader2 className="h-10 w-10 animate-spin mb-4 text-primary" />
+            <p className="font-medium">Loading service providers...</p>
+          </div>
+        ) : providers.length === 0 ? (
+          <div className="text-center py-20 bg-muted/20 rounded-2xl border-2 border-dashed max-w-2xl mx-auto">
+            <div className="bg-muted rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
               <Search className="h-10 w-10 text-muted-foreground" />
             </div>
-            <h3 className="text-xl mb-2">No results found</h3>
-            <p className="text-muted-foreground mb-6">
+            <h3 className="text-xl font-bold mb-2">No results found</h3>
+            <p className="text-muted-foreground mb-6 font-medium">
               Try adjusting your filters or search query
             </p>
-            <Button onClick={clearFilters} variant="outline">
+            <Button onClick={clearFilters} variant="outline" className="font-bold">
               Clear All Filters
             </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProviders.map((provider) => {
-              const category = categories.find((c) => c.id === provider.category);
+            {providers.map((provider) => {
+              const category = Array.isArray(provider.categories) 
+                ? provider.categories[0] 
+                : provider.categories;
+
               return (
                 <Card
                   key={provider.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
+                  className="hover:shadow-lg transition-all hover:border-primary/50 cursor-pointer group h-full"
                   onClick={() => onNavigate("profile", { id: provider.id })}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
-                      <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                      <div className="bg-primary/10 text-primary p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                         <CategoryIcon icon={category?.icon || "briefcase"} className="h-5 w-5" />
                       </div>
-                      {provider.rating && (
-                        <div className="flex items-center gap-1 text-sm">
+                      {provider.rating > 0 && (
+                        <div className="flex items-center gap-1 text-sm font-bold">
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                           <span>{provider.rating}</span>
                         </div>
                       )}
                     </div>
-                    <CardTitle className="text-lg">{provider.name}</CardTitle>
-                    <CardDescription>{category?.name}</CardDescription>
+                    <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors">
+                      {provider.name}
+                    </CardTitle>
+                    <CardDescription className="font-semibold text-primary/80">
+                      {category?.name || "Service Provider"}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                    <p className="text-sm text-muted-foreground line-clamp-3 mb-4 leading-relaxed min-h-[60px]">
                       {provider.description}
                     </p>
-                    <div className="flex flex-wrap gap-1 mb-3">
+                    <div className="flex flex-wrap gap-1.5 mb-4">
                       {provider.skills.slice(0, 3).map((skill) => (
-                        <Badge key={skill} variant="outline" className="text-xs">
+                        <Badge key={skill} variant="secondary" className="text-[10px] px-2 py-0">
                           {skill}
                         </Badge>
                       ))}
                       {provider.skills.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[10px] px-2 py-0">
                           +{provider.skills.length - 3}
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground border-t pt-4 mt-auto font-medium">
+                      <MapPin className="h-4 w-4 text-primary" />
                       <span>{provider.location}</span>
                     </div>
                   </CardContent>
